@@ -1,0 +1,25 @@
+{
+ "cards": [],
+ "charts": [
+  {
+   "chart": "Teraoka Sync Status",
+   "width": "Half"
+  },
+  {
+   "chart": "Teraoka Processed Files",
+   "width": "Half"
+  }
+ ],
+ "creation": "2026-03-30 00:00:00.000000",
+ "dashboard_name": "Teraoka Dashboard",
+ "docstatus": 0,
+ "doctype": "Dashboard",
+ "idx": 0,
+ "is_public": 1,
+ "is_standard": 1,
+ "modified": "2026-03-30 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Teraoka Integration",
+ "name": "Teraoka Dashboard",
+ "owner": "Administrator"
+}

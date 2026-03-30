@@ -1,0 +1,23 @@
+{
+ "based_on": "processed_on",
+ "chart_name": "Teraoka Processed Files",
+ "chart_type": "Count",
+ "creation": "2026-03-30 00:00:00.000000",
+ "docstatus": 0,
+ "doctype": "Dashboard Chart",
+ "document_type": "Teraoka File Log",
+ "group_by_type": "Count",
+ "idx": 0,
+ "is_public": 1,
+ "is_standard": 1,
+ "last_sync_on": "2026-03-30 00:00:00.000000",
+ "modified": "2026-03-30 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Teraoka Integration",
+ "name": "Teraoka Processed Files",
+ "owner": "Administrator",
+ "parent_field": "processed_on",
+ "type": "Bar",
+ "time_interval": "Daily",
+ "timeseries": 1
+}

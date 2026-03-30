@@ -1,0 +1,152 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-03-30 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "ftp_section",
+  "host",
+  "port",
+  "is_sftp",
+  "username",
+  "password",
+  "remote_path",
+  "archive_processed_files",
+  "archive_path",
+  "check_connection",
+  "erp_mappings_section",
+  "company",
+  "customer",
+  "default_warehouse",
+  "automation_section",
+  "auto_submit",
+  "enabled"
+ ],
+ "fields": [
+  {
+   "fieldname": "ftp_section",
+   "fieldtype": "Section Break",
+   "label": "FTP / SFTP Settings"
+  },
+  {
+   "fieldname": "host",
+   "fieldtype": "Data",
+   "label": "Host",
+   "reqd": 1
+  },
+  {
+   "default": "21",
+   "fieldname": "port",
+   "fieldtype": "Int",
+   "label": "Port"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_sftp",
+   "fieldtype": "Check",
+   "label": "Is SFTP?"
+  },
+  {
+   "fieldname": "username",
+   "fieldtype": "Data",
+   "label": "Username",
+   "reqd": 1
+  },
+  {
+   "fieldname": "password",
+   "fieldtype": "Password",
+   "label": "Password",
+   "reqd": 1
+  },
+  {
+   "fieldname": "remote_path",
+   "fieldtype": "Data",
+   "label": "Remote Path",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "archive_processed_files",
+   "fieldtype": "Check",
+   "label": "Archive Processed Files?"
+  },
+  {
+   "depends_on": "eval:doc.archive_processed_files == 1",
+   "fieldname": "archive_path",
+   "fieldtype": "Data",
+   "label": "Archive Path",
+   "placeholder": "./archives/"
+  },
+  {
+   "fieldname": "check_connection",
+   "fieldtype": "Button",
+   "label": "Check Connection"
+  },
+  {
+   "fieldname": "erp_mappings_section",
+   "fieldtype": "Section Break",
+   "label": "ERP Mappings"
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1
+  },
+  {
+   "fieldname": "customer",
+   "fieldtype": "Link",
+   "label": "Default Customer",
+   "options": "Customer",
+   "reqd": 1
+  },
+  {
+   "fieldname": "default_warehouse",
+   "fieldtype": "Link",
+   "label": "Default Warehouse",
+   "options": "Warehouse"
+  },
+  {
+   "fieldname": "automation_section",
+   "fieldtype": "Section Break",
+   "label": "Automation"
+  },
+  {
+   "default": "1",
+   "fieldname": "auto_submit",
+   "fieldtype": "Check",
+   "label": "Auto Submit Invoices"
+  },
+  {
+   "default": "1",
+   "fieldname": "enabled",
+   "fieldtype": "Check",
+   "label": "Enabled"
+  }
+ ],
+ "issingle": 1,
+ "links": [],
+ "modified": "2026-03-30 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Teraoka Integration",
+ "name": "Teraoka Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
