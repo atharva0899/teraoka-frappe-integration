@@ -1,7 +1,7 @@
 {
  "actions": [],
  "allow_rename": 1,
- "autoname": "format:TFL-{YYYY}-{MM}-{DD}-{filename}",
+ "autoname": "TFL-.YYYY.-.MM.-.DD.-.filename.",
  "creation": "2026-03-30 00:00:00.000000",
  "doctype": "DocType",
  "editable_grid": 1,
@@ -10,9 +10,17 @@
   "filename",
   "status",
   "processed_on",
+  "column_break_main",
   "attached_file",
+  "analytics_section",
+  "total_quantity",
+  "total_amount",
+  "column_break_analytics",
+  "shop_code",
+  "file_date",
   "stats_section",
   "success_count",
+  "column_break_stats",
   "error_count",
   "logs_section",
   "logs"
@@ -29,8 +37,9 @@
    "fieldname": "status",
    "fieldtype": "Select",
    "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Status",
-   "options": "Pending\nSuccess\nPartial Success\nFailed",
+   "options": "Pending\nPending Sync\nSuccess\nPartial Success\nFailed",
    "reqd": 1
   },
   {
@@ -40,38 +49,89 @@
    "label": "Processed On"
   },
   {
+   "fieldname": "column_break_main",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Copy of the processed CSV file.",
    "fieldname": "attached_file",
    "fieldtype": "Attach",
-   "label": "Attached File"
+   "label": "File Signature"
+  },
+  {
+   "fieldname": "analytics_section",
+   "fieldtype": "Section Break",
+   "label": "MIS Analytics Summary"
+  },
+  {
+   "fieldname": "total_quantity",
+   "fieldtype": "Float",
+   "label": "Total Quantity Sold",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_amount",
+   "fieldtype": "Currency",
+   "label": "Total Sale Value",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_analytics",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "shop_code",
+   "fieldtype": "Data",
+   "in_standard_filter": 1,
+   "label": "Shop Code",
+   "read_only": 1
+  },
+  {
+   "fieldname": "file_date",
+   "fieldtype": "Date",
+   "in_standard_filter": 1,
+   "label": "Transaction Date",
+   "read_only": 1
   },
   {
    "fieldname": "stats_section",
    "fieldtype": "Section Break",
-   "label": "Statistics"
+   "label": "Processing Statistics"
   },
   {
    "fieldname": "success_count",
    "fieldtype": "Int",
-   "label": "Success Count"
+   "label": "Successful Invoices"
+  },
+  {
+   "fieldname": "column_break_stats",
+   "fieldtype": "Column Break"
   },
   {
    "fieldname": "error_count",
    "fieldtype": "Int",
-   "label": "Error Count"
+   "label": "Errors Encountered"
+  },
+  {
+   "fieldname": "total_records",
+   "fieldtype": "Int",
+   "label": "Total Records in File",
+   "read_only": 1
   },
   {
    "fieldname": "logs_section",
    "fieldtype": "Section Break",
-   "label": "Logs"
+   "label": "Execution Logs"
   },
   {
    "fieldname": "logs",
    "fieldtype": "Text Editor",
-   "label": "Logs"
+   "label": "Detailed Logs"
   }
  ],
+ "icon": "octicon octicon-history",
  "links": [],
- "modified": "2026-03-30 00:00:00.000000",
+ "modified": "2026-04-15 16:47:00.000000",
  "modified_by": "Administrator",
  "module": "Teraoka Integration",
  "name": "Teraoka File Log",
@@ -88,9 +148,25 @@
    "role": "System Manager",
    "share": 1,
    "write": 1
+  },
+  {
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Accounts Manager"
+  },
+  {
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Sales Manager"
   }
  ],
- "sort_field": "modified",
+ "search_fields": "filename,shop_code",
+ "sort_field": "creation",
  "sort_order": "DESC",
- "states": []
+ "states": [],
+ "title_field": "filename"
 }

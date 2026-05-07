@@ -45,8 +45,10 @@ app_license = "mit"
 # ---------------
 
 scheduler_events = {
-	"daily": [
-		"teraoka_integration.teraoka_integration.process.sync_teraoka_files"
+	"hourly": [
+		"teraoka_integration.teraoka_integration.services.process.sync_teraoka_files",
+		"teraoka_integration.teraoka_integration.services.netsuite.send_to_netsuite",
+		"teraoka_integration.teraoka_integration.services.netsuite.retry_failed_netsuite_syncs"
 	]
 }
 

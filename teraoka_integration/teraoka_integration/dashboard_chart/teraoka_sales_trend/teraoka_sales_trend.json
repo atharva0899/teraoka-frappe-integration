@@ -1,0 +1,23 @@
+{
+ "aggregate_function_based_on": "total_amount",
+ "based_on": "file_date",
+ "chart_name": "Teraoka Sales Trend",
+ "chart_type": "Sum",
+ "creation": "2026-04-15 00:00:00.000000",
+ "docstatus": 0,
+ "doctype": "Dashboard Chart",
+ "document_type": "Teraoka File Log",
+ "function": "Sum",
+ "idx": 0,
+ "is_public": 1,
+ "is_standard": 1,
+ "modified": "2026-04-15 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Teraoka Integration",
+ "name": "Teraoka Sales Trend",
+ "owner": "Administrator",
+ "time_interval": "Daily",
+ "timeseries": 1,
+ "type": "Line",
+ "value_based_on": "total_amount"
+}

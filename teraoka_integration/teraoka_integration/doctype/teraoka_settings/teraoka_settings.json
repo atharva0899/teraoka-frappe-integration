@@ -10,25 +10,46 @@
   "host",
   "port",
   "is_sftp",
+  "column_break_ftp_1",
   "username",
   "password",
+  "column_break_ftp_2",
   "remote_path",
   "archive_processed_files",
   "archive_path",
   "check_connection",
+  "shop_mappings_section",
+  "shop_mappings",
   "erp_mappings_section",
   "company",
   "customer",
+  "column_break_erp_1",
   "default_warehouse",
+  "default_cash_account",
   "automation_section",
+  "enabled",
+  "column_break_auto_1",
   "auto_submit",
-  "enabled"
+  "item_master_section",
+  "default_item_group",
+  "netsuite_section",
+  "netsuite_enabled",
+  "teams_webhook_url",
+  "netsuite_account_id",
+  "netsuite_rest_url",
+  "column_break_ns_1",
+  "ns_consumer_key",
+  "ns_consumer_secret",
+  "column_break_ns_2",
+  "ns_token_id",
+  "ns_token_secret"
  ],
  "fields": [
   {
    "fieldname": "ftp_section",
    "fieldtype": "Section Break",
-   "label": "FTP / SFTP Settings"
+   "icon": "octicon octicon-server",
+   "label": "Connection Settings"
   },
   {
    "fieldname": "host",
@@ -49,6 +70,10 @@
    "label": "Is SFTP?"
   },
   {
+   "fieldname": "column_break_ftp_1",
+   "fieldtype": "Column Break"
+  },
+  {
    "fieldname": "username",
    "fieldtype": "Data",
    "label": "Username",
@@ -59,6 +84,10 @@
    "fieldtype": "Password",
    "label": "Password",
    "reqd": 1
+  },
+  {
+   "fieldname": "column_break_ftp_2",
+   "fieldtype": "Column Break"
   },
   {
    "fieldname": "remote_path",
@@ -76,32 +105,48 @@
    "depends_on": "eval:doc.archive_processed_files == 1",
    "fieldname": "archive_path",
    "fieldtype": "Data",
-   "label": "Archive Path",
-   "placeholder": "./archives/"
+   "label": "Archive Path"
   },
   {
    "fieldname": "check_connection",
    "fieldtype": "Button",
-   "label": "Check Connection"
+   "label": "Test Connection"
+  },
+  {
+   "fieldname": "shop_mappings_section",
+   "fieldtype": "Section Break",
+   "icon": "octicon octicon-list-unordered",
+   "label": "Shop Mappings"
+  },
+  {
+   "fieldname": "shop_mappings",
+   "fieldtype": "Table",
+   "label": "Shop Mappings",
+   "options": "Teraoka Shop Mapping Details"
   },
   {
    "fieldname": "erp_mappings_section",
    "fieldtype": "Section Break",
-   "label": "ERP Mappings"
+   "icon": "octicon octicon-database",
+   "label": "Global Defaults"
   },
   {
    "fieldname": "company",
    "fieldtype": "Link",
-   "label": "Company",
+   "label": "Target Company",
    "options": "Company",
    "reqd": 1
   },
   {
    "fieldname": "customer",
    "fieldtype": "Link",
-   "label": "Default Customer",
+   "label": "Default (Walk-In) Customer",
    "options": "Customer",
    "reqd": 1
+  },
+  {
+   "fieldname": "column_break_erp_1",
+   "fieldtype": "Column Break"
   },
   {
    "fieldname": "default_warehouse",
@@ -110,26 +155,107 @@
    "options": "Warehouse"
   },
   {
-   "fieldname": "automation_section",
-   "fieldtype": "Section Break",
-   "label": "Automation"
+   "fieldname": "default_cash_account",
+   "fieldtype": "Link",
+   "label": "Default Payment Account",
+   "options": "Account"
   },
   {
-   "default": "1",
-   "fieldname": "auto_submit",
-   "fieldtype": "Check",
-   "label": "Auto Submit Invoices"
+   "fieldname": "automation_section",
+   "fieldtype": "Section Break",
+   "icon": "octicon octicon-zap",
+   "label": "Automation Settings"
   },
   {
    "default": "1",
    "fieldname": "enabled",
    "fieldtype": "Check",
-   "label": "Enabled"
+   "label": "Sync Enabled"
+  },
+  {
+   "fieldname": "column_break_auto_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "1",
+   "fieldname": "auto_submit",
+   "fieldtype": "Check",
+   "label": "Auto-Submit Invoices"
+  },
+  {
+   "fieldname": "item_master_section",
+   "fieldtype": "Section Break",
+   "icon": "octicon octicon-package",
+   "label": "Item Master Defaults"
+  },
+  {
+   "default": "All Item Groups",
+   "fieldname": "default_item_group",
+   "fieldtype": "Link",
+   "label": "Default Item Group",
+   "options": "Item Group"
+  },
+  {
+   "fieldname": "netsuite_section",
+   "fieldtype": "Section Break",
+   "icon": "octicon octicon-link-external",
+   "label": "NetSuite Integration"
+  },
+  {
+   "default": "0",
+   "fieldname": "netsuite_enabled",
+   "fieldtype": "Check",
+   "label": "NetSuite Sync Enabled"
+  },
+  {
+   "fieldname": "teams_webhook_url",
+   "fieldtype": "Data",
+   "label": "Teams Webhook URL"
+  },
+  {
+   "fieldname": "netsuite_account_id",
+   "fieldtype": "Data",
+   "label": "NetSuite Account ID",
+   "placeholder": "e.g. 1234567_SB1"
+  },
+  {
+   "fieldname": "netsuite_rest_url",
+   "fieldtype": "Data",
+   "label": "NetSuite REST URL",
+   "description": "The RESTlet or REST API URL for your NetSuite instance."
+  },
+  {
+   "fieldname": "column_break_ns_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "ns_consumer_key",
+   "fieldtype": "Data",
+   "label": "Consumer Key"
+  },
+  {
+   "fieldname": "ns_consumer_secret",
+   "fieldtype": "Password",
+   "label": "Consumer Secret"
+  },
+  {
+   "fieldname": "column_break_ns_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "ns_token_id",
+   "fieldtype": "Data",
+   "label": "Token ID"
+  },
+  {
+   "fieldname": "ns_token_secret",
+   "fieldtype": "Password",
+   "label": "Token Secret"
   }
  ],
+ "icon": "octicon octicon-gear",
  "issingle": 1,
- "links": [],
- "modified": "2026-03-30 00:00:00.000000",
+ "modified": "2026-04-24 16:35:00.000000",
  "modified_by": "Administrator",
  "module": "Teraoka Integration",
  "name": "Teraoka Settings",

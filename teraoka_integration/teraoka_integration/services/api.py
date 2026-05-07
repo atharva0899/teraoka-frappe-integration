@@ -13,3 +13,4 @@ def test_connection(settings):
 		return "OK"
 	except Exception as e:
 		frappe.throw(_("Connection failed: {0}").format(str(e)))
+
