@@ -13,6 +13,9 @@ frappe.ui.form.on('Teraoka File Log', {
 		} else if (frm.doc.status === 'Partial Success') {
 			color = 'orange';
 			description = 'Some invoices were created while others failed.';
+		} else if (frm.doc.status === 'Pending Sync') {
+			color = 'blue';
+			description = 'Invoices created. Waiting to sync with NetSuite.';
 		} else {
 			color = 'yellow';
 			description = 'File is in queue for processing.';
@@ -22,27 +25,23 @@ frappe.ui.form.on('Teraoka File Log', {
 			`<div class="indicator ${color}">${__(description)}</div>`
 		);
 
-		// Button to view linked invoices
-		if (frm.doc.status !== 'Pending') {
-			frm.add_custom_button(__('View Created Invoices'), function() {
-				frappe.set_route('List', 'Sales Invoice', {
-					'posting_date': frm.doc.file_date,
-					'remarks': ['like', `%${frm.doc.filename}%`]
+		if (frm.doc.status === 'Pending Sync' || frm.doc.status === 'Failed' || frm.doc.status === 'Partial Success' || frm.doc.status === 'Syncing') {
+			frm.add_custom_button(__('Sync to NetSuite'), () => {
+				frappe.call({
+					method: 'teraoka_integration.teraoka_integration.services.netsuite.enqueue_sync_log',
+					args: {
+						log_name: frm.doc.name
+					},
+					freeze: true,
+					freeze_message: __('Enqueuing NetSuite Sync...'),
+					callback: function(r) {
+						frm.reload_doc();
+						frappe.show_alert(__('NetSuite sync has been enqueued. Processing in background...'));
+					}
 				});
 			});
 		}
 	}
 });
 
-// List view indicators
-frappe.listview_settings['Teraoka File Log'] = {
-	get_indicator(doc) {
-		const colors = {
-			'Success': 'green',
-			'Failed': 'red',
-			'Partial Success': 'orange',
-			'Pending': 'yellow'
-		};
-		return [__(doc.status), colors[doc.status] || 'gray', `status,=,${doc.status}`];
-	}
-};
+

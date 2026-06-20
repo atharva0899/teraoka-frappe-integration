@@ -132,7 +132,10 @@ def parse_raw_lines(file_path):
 	Parses the file and returns a list of raw rows (as lists or dicts) for the Splitter.
 	"""
 	raw_lines = []
-	with open(file_path, mode='r', encoding='cp932', errors='replace') as f:
+	is_gyoumu = "GYOUMU" in os.path.basename(file_path).upper()
+	encoding = 'cp932' if is_gyoumu else 'utf-8-sig'
+	
+	with open(file_path, mode='r', encoding=encoding, errors='replace') as f:
 		reader = csv.reader(f)
 		for row in reader:
 			if row:

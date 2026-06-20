@@ -42,12 +42,7 @@ def sync_teraoka_files():
 						log.status = "Pending"
 						log.insert()
 					
-					# Download immediately
-					local_path = os.path.join(frappe.get_site_path("private", "files"), filename)
-					download_file(settings, filename, local_path, conn_obj=tconn)
-					attach_file_to_log(filename, local_path, log)
-
-					# Queue for Processing
+					# Queue for Processing (downloads and processes concurrently in background worker)
 					frappe.enqueue(
 						"teraoka_integration.teraoka_integration.services.process.process_file",
 						queue="default",
@@ -59,12 +54,22 @@ def sync_teraoka_files():
 		frappe.log_error(title="Teraoka Sync: Connection Failed", message=frappe.get_traceback())
 
 def process_file(filename, log_name):
-	"""Processes a single file and populates MIS analytics summary."""
+	"""Processes a single file: downloads it, attaches it, and populates MIS analytics summary."""
 	log = frappe.get_doc("Teraoka File Log", log_name)
 	settings = frappe.get_single("Teraoka Settings")
 	local_path = os.path.join(frappe.get_site_path("private", "files"), filename)
 	
 	try:
+		# 1. Download file from SFTP/FTP inside the background worker thread
+		from .ftp import download_file, TeraokaConnector
+		with TeraokaConnector(settings) as tconn:
+			download_file(settings, filename, local_path, conn_obj=tconn)
+			
+		# 2. Attach downloaded file to log record
+		attach_file_to_log(filename, local_path, log)
+		log.save()
+		frappe.db.commit()
+
 		# Parse with summary support (Legacy/Fallback)
 		result_data = parse_csv(local_path)
 		data = result_data.get("items", {})
@@ -96,10 +101,8 @@ def process_file(filename, log_name):
 				if date_str.startswith('20'):
 					posting_date = f"{date_str[:4]}-{date_str[4:6]}-{date_str[6:]}"
 
-		# Attach File
-		attach_file_to_log(filename, local_path, log)
-
 		if mapped_data:
+
 			# Use new architecture
 			enqueue_transactions(mapped_data, log_name=log.name)
 			log.status = "Pending"
@@ -110,6 +113,10 @@ def process_file(filename, log_name):
 			log.total_records = len(mapped_data)
 			log.total_quantity = sum(sum(item.get('qty', 0) for item in txn.get('items', [])) for txn in mapped_data)
 			log.total_amount = sum(sum(item.get('amount', 0) for item in txn.get('items', [])) for txn in mapped_data)
+			
+			# Set posting date from the transactions
+			if len(mapped_data) > 0 and mapped_data[0].get("date"):
+				posting_date = mapped_data[0].get("date")
 		else:
 			# Fallback to Frappe Doc Creation for non-transactional files
 			result = create_sales_invoices(data, settings, shop_code, posting_date)
@@ -131,6 +138,7 @@ def process_file(filename, log_name):
 		
 		log.processed_on = now_datetime()
 		log.save()
+		frappe.db.commit()
 		
 		# Archiving is moved to the final Netsuite sync step.
 	except Exception as e:
@@ -138,6 +146,7 @@ def process_file(filename, log_name):
 		log.logs = frappe.get_traceback()
 		log.processed_on = now_datetime()
 		log.save()
+		frappe.db.commit()
 		frappe.log_error(title=f"Teraoka Sync: File Processing Failed ({filename})", message=frappe.get_traceback())
 
 def attach_file_to_log(filename, local_path, log):

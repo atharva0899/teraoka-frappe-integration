@@ -9,7 +9,7 @@
    "label": "Sales Distribution"
   }
  ],
- "content": "[{\"id\":\"W-Header\",\"type\":\"header\",\"data\":{\"text\":\"Teraoka POS Analytics\",\"col\":12}},{\"id\":\"W-Chart-1\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Teraoka Sales Trend\",\"col\":12}},{\"id\":\"W-Spacer-1\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"W-Shortcuts-Header\",\"type\":\"paragraph\",\"data\":{\"text\":\"Configuration & Monitoring\",\"col\":12}},{\"id\":\"W-Shortcut-Hub\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Integration Hub\",\"col\":12}},{\"id\":\"W-Shortcut-1\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Teraoka Settings\",\"col\":4}},{\"id\":\"W-Shortcut-2\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Teraoka File Log\",\"col\":4}},{\"id\":\"W-Shortcut-3\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Sales Invoices\",\"col\":4}}]",
+ "content": "[{\"id\":\"W-Header\",\"type\":\"header\",\"data\":{\"text\":\"Teraoka POS Analytics\",\"col\":12}},{\"id\":\"W-Chart-1\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Teraoka Sales Trend\",\"col\":6}},{\"id\":\"W-Chart-2\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Teraoka Sales by Shop\",\"col\":6}},{\"id\":\"W-Spacer-1\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"W-Shortcuts-Header\",\"type\":\"paragraph\",\"data\":{\"text\":\"Configuration & Monitoring\",\"col\":12}},{\"id\":\"W-Shortcut-Hub\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Integration Hub\",\"col\":4}},{\"id\":\"W-Shortcut-1\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Teraoka Settings\",\"col\":4}},{\"id\":\"W-Shortcut-2\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Teraoka File Log\",\"col\":4}},{\"id\":\"W-Shortcut-3\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"NetSuite Sync Log\",\"col\":4}},{\"id\":\"W-Shortcut-4\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Sales Invoices\",\"col\":4}}]",
  "creation": "2026-04-15 00:00:00.000000",
  "docstatus": 0,
  "doctype": "Workspace",
@@ -21,25 +21,35 @@
   {
    "link_to": "teraoka-hub",
    "link_type": "Page",
-   "label": "Integration Hub"
+   "label": "Integration Hub",
+   "type": "Link"
   },
   {
    "link_to": "Teraoka Settings",
    "link_type": "DocType",
-   "label": "General Settings"
+   "label": "General Settings",
+   "type": "Link"
   },
   {
    "link_to": "Teraoka File Log",
    "link_type": "DocType",
-   "label": "Sync History"
+   "label": "Sync History",
+   "type": "Link"
   },
   {
    "link_to": "Sales Invoice",
    "link_type": "DocType",
-   "label": "Generated Invoices"
+   "label": "Generated Invoices",
+   "type": "Link"
+  },
+  {
+   "link_to": "NetSuite Sync Log",
+   "link_type": "DocType",
+   "label": "NetSuite Sync Log",
+   "type": "Link"
   }
  ],
- "modified": "2026-04-24 16:35:00.000000",
+ "modified": "2026-06-19 16:05:00.000000",
  "modified_by": "Administrator",
  "module": "Teraoka Integration",
  "name": "Teraoka POS",
@@ -49,6 +59,9 @@
   },
   {
    "number_card_name": "Teraoka Sync Health"
+  },
+  {
+   "number_card_name": "NetSuite Failed Syncs"
   }
  ],
  "owner": "Administrator",
@@ -68,6 +81,12 @@
   {
    "label": "Teraoka File Log",
    "link_to": "Teraoka File Log",
+   "type": "DocType",
+   "doc_view": "List"
+  },
+  {
+   "label": "NetSuite Sync Log",
+   "link_to": "NetSuite Sync Log",
    "type": "DocType",
    "doc_view": "List"
   },

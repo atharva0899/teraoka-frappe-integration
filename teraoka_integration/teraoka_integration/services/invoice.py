@@ -117,91 +117,181 @@ def get_warehouse(settings, shop_code):
 def create_sales_invoice_from_txn(txn, settings):
 	"""
 	Transforms a single structured POS transaction (TL + ILs) into an ERPNext Sales Invoice.
+	Supports splitting mixed transactions containing both positive and negative quantities.
 	"""
 	if not txn.get("items"):
 		return {"status": "Failed", "error": "No items in transaction"}
 
 	shop_code = txn.get("store_code")
-	warehouse = get_warehouse(settings, shop_code) or settings.default_warehouse
-	
-	si = frappe.new_doc("Sales Invoice")
-	si.company = settings.company
-	si.customer = settings.customer
-	si.posting_date = txn.get("date") or nowdate()
-	si.update_stock = 1
-	si.set_posting_time = 1
-	si.teraoka_shop_code = shop_code
-	
-	# Reference the POS receipt
 	txn_id = txn.get("transaction_id", "Unknown")
-	si.remarks = f"Auto-generated from Teraoka Integration.\nTransaction ID: {txn_id}\nStore Code: {shop_code}"
 	
-	if warehouse:
-		si.set_warehouse = warehouse
-
-	# Add mapped IL rows
-	for item in txn.get("items"):
-		item_code = item.get("item_code")
-		item_name = item.get("item_name") or item_code
-		
-		# Auto-Create missing Item on the fly to prevent integration failures
-		if not frappe.db.exists("Item", item_code):
-			try:
-				new_item = frappe.new_doc("Item")
-				new_item.item_code = item_code
-				new_item.item_name = item_name
-				new_item.item_group = settings.default_item_group or "All Item Groups"
-				new_item.stock_uom = "Nos"
-				new_item.is_stock_item = 1
-				new_item.valuation_rate = 0.0
-				new_item.insert(ignore_permissions=True)
-				frappe.db.commit()
-				frappe.logger("teraoka").info(f"Auto-created missing Item: {item_code}")
-			except frappe.DuplicateEntryError:
-				# Another worker already created it, safe to ignore
-				frappe.db.rollback()
-			except Exception as e:
-				return {"status": "Failed", "error": f"Failed to auto-create Item '{item_code}': {str(e)}"}
-
-		si.append("items", {
-			"item_code": item_code,
-			"qty": flt(item.get("qty")),
-			"rate": flt(item.get("rate")),
-			"warehouse": warehouse,
-			"allow_zero_valuation_rate": 1
-		})
-
+	# Duplicate Check
 	try:
+		existing = frappe.db.get_value("Sales Invoice", {"teraoka_receipt_key": txn_id}, "name")
+		if existing:
+			return {"status": "Skipped", "error": f"Receipt {txn_id} already processed as {existing}"}
+	except Exception:
+		pass # Ignore if custom field is not migrated yet
+
+	# Shop Mapping Resolution
+	mapping = None
+	for m in settings.get("shop_mappings", []):
+		if m.shop_code == shop_code:
+			mapping = m
+			break
+			
+	warehouse = mapping.warehouse if mapping else settings.default_warehouse
+	company = mapping.company if mapping and mapping.company else settings.company
+	cost_center = mapping.cost_center if mapping else None
+
+	# Customer Resolution
+	customer = settings.customer
+	customer_code = txn.get("customer_code")
+	if customer_code:
+		try:
+			found_cust = frappe.db.get_value("Customer", {"teraoka_customer_code": customer_code}, "name")
+			if found_cust:
+				customer = found_cust
+		except Exception:
+			pass
+
+	# Separate items into positive/zero and negative quantities with normalization for negative rates
+	positive_items = []
+	negative_items = []
+	for item in txn.get("items"):
+		qty = flt(item.get("qty"))
+		rate = flt(item.get("rate"))
+		
+		# Normalize negative rate/amount to negative quantity and positive rate for ERPNext compatibility
+		if rate < 0:
+			qty = -qty
+			rate = abs(rate)
+			
+		item_normalized = item.copy()
+		item_normalized["qty"] = qty
+		item_normalized["rate"] = rate
+
+		if qty >= 0:
+			positive_items.append(item_normalized)
+		else:
+			negative_items.append(item_normalized)
+
+	created_invoices = []
+	errors = []
+
+	def build_invoice(items_to_add, is_ret, receipt_key_suffix=""):
+		si = frappe.new_doc("Sales Invoice")
+		si.company = company
+		si.customer = customer
+		si.posting_date = txn.get("date") or nowdate()
+		si.update_stock = 1
+		si.set_posting_time = 1
+		si.teraoka_shop_code = shop_code
+		
+		try:
+			si.teraoka_receipt_key = f"{txn_id}{receipt_key_suffix}"
+		except Exception:
+			pass
+		
+		if is_ret:
+			si.is_return = 1
+		
+		suffix_desc = " (Return)" if is_ret else ""
+		si.remarks = f"Auto-generated from Teraoka Integration{suffix_desc}.\nTransaction ID: {txn_id}\nStore Code: {shop_code}"
+		
+		if warehouse:
+			si.set_warehouse = warehouse
+
+		for item in items_to_add:
+			item_barcode = item.get("item_code")
+			item_code = frappe.db.get_value("Item Barcode", {"barcode": item_barcode}, "parent")
+			if not item_code:
+				if frappe.db.exists("Item", item_barcode):
+					item_code = item_barcode
+				else:
+					raise Exception(f"Barcode not found in Item Master: {item_barcode}")
+
+			si.append("items", {
+				"item_code": item_code,
+				"qty": flt(item.get("qty")),
+				"rate": flt(item.get("rate")),
+				"warehouse": warehouse,
+				"cost_center": cost_center,
+				"allow_zero_valuation_rate": 1
+			})
+		
 		si.insert()
 		if settings.auto_submit:
 			si.submit()
-			# Automate Payment Entry as per Sequence Diagram
 			if settings.default_cash_account:
 				create_payment_entry(si, settings)
-				
-		return {"status": "Success", "invoice": si.name}
-	except Exception as e:
-		frappe.log_error(title=f"Teraoka Sync: Invoice Creation Error ({txn_id})", message=frappe.get_traceback())
-		return {"status": "Failed", "error": str(e)}
+		return si.name
+
+	# 1. Create normal invoice
+	if positive_items:
+		try:
+			inv_name = build_invoice(positive_items, is_ret=False)
+			created_invoices.append(inv_name)
+		except Exception as e:
+			errors.append(str(e))
+			frappe.log_error(title=f"Teraoka Sync: Normal Invoice Creation Error ({txn_id})", message=frappe.get_traceback())
+
+	# 2. Create return invoice
+	if negative_items:
+		suffix = "-RET" if positive_items else ""
+		ret_key = f"{txn_id}{suffix}"
+		try:
+			existing_ret = frappe.db.get_value("Sales Invoice", {"teraoka_receipt_key": ret_key}, "name")
+			if not existing_ret:
+				inv_name = build_invoice(negative_items, is_ret=True, receipt_key_suffix=suffix)
+				created_invoices.append(inv_name)
+			else:
+				created_invoices.append(existing_ret)
+		except Exception as e:
+			errors.append(str(e))
+			frappe.log_error(title=f"Teraoka Sync: Return Invoice Creation Error ({txn_id})", message=frappe.get_traceback())
+
+	if errors:
+		return {"status": "Failed", "error": "; ".join(errors)}
+	
+	if created_invoices:
+		return {"status": "Success", "invoice": created_invoices[0]}
+		
+	return {"status": "Failed", "error": "No invoices created"}
 
 def create_payment_entry(invoice, settings):
 	"""
 	Automatically creates and submits a Payment Entry for a Sales Invoice.
 	Ensures the invoice is closed before NetSuite synchronization.
+	Supports both standard payments and return/refund payments.
 	"""
 	try:
 		pe = frappe.new_doc("Payment Entry")
-		pe.payment_type = "Receive"
-		pe.party_type = "Customer"
-		pe.party = invoice.customer
-		pe.company = invoice.company
-		pe.posting_date = invoice.posting_date
-		pe.paid_amount = invoice.grand_total
-		pe.received_amount = invoice.grand_total
-		pe.paid_from = invoice.debit_to
-		pe.paid_to = settings.default_cash_account
 		
-		# Reference the invoice
+		is_ret = flt(invoice.grand_total) < 0 or getattr(invoice, "is_return", 0)
+		
+		if is_ret:
+			pe.payment_type = "Pay"
+			pe.party_type = "Customer"
+			pe.party = invoice.customer
+			pe.company = invoice.company
+			pe.posting_date = invoice.posting_date
+			pe.paid_amount = abs(flt(invoice.grand_total))
+			pe.received_amount = abs(flt(invoice.grand_total))
+			pe.paid_from = settings.default_cash_account
+			pe.paid_to = invoice.debit_to
+		else:
+			pe.payment_type = "Receive"
+			pe.party_type = "Customer"
+			pe.party = invoice.customer
+			pe.company = invoice.company
+			pe.posting_date = invoice.posting_date
+			pe.paid_amount = invoice.grand_total
+			pe.received_amount = invoice.grand_total
+			pe.paid_from = invoice.debit_to
+			pe.paid_to = settings.default_cash_account
+		
+		# Reference the invoice retaining negative signs for returns
 		pe.append("references", {
 			"reference_doctype": "Sales Invoice",
 			"reference_name": invoice.name,

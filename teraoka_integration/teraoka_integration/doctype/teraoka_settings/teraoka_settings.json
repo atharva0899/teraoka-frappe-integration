@@ -1,12 +1,12 @@
 {
  "actions": [],
  "allow_rename": 1,
- "creation": "2026-03-30 00:00:00.000000",
+ "creation": "2026-03-30 00:00:00",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
-  "ftp_section",
+  "ftp_tab",
   "host",
   "port",
   "is_sftp",
@@ -18,23 +18,24 @@
   "archive_processed_files",
   "archive_path",
   "check_connection",
-  "shop_mappings_section",
+  "shop_mappings_tab",
   "shop_mappings",
-  "erp_mappings_section",
+  "erp_mappings_tab",
   "company",
   "customer",
   "column_break_erp_1",
   "default_warehouse",
   "default_cash_account",
-  "automation_section",
+  "automation_tab",
   "enabled",
   "column_break_auto_1",
   "auto_submit",
-  "item_master_section",
+  "item_master_tab",
   "default_item_group",
-  "netsuite_section",
+  "netsuite_tab",
   "netsuite_enabled",
-  "teams_webhook_url",
+  "google_chat_webhook_url",
+  "netsuite_customer_id",
   "netsuite_account_id",
   "netsuite_rest_url",
   "column_break_ns_1",
@@ -46,14 +47,14 @@
  ],
  "fields": [
   {
-   "fieldname": "ftp_section",
-   "fieldtype": "Section Break",
-   "icon": "octicon octicon-server",
+   "fieldname": "ftp_tab",
+   "fieldtype": "Tab Break",
    "label": "Connection Settings"
   },
   {
    "fieldname": "host",
    "fieldtype": "Data",
+   "in_list_view": 1,
    "label": "Host",
    "reqd": 1
   },
@@ -76,12 +77,14 @@
   {
    "fieldname": "username",
    "fieldtype": "Data",
+   "in_list_view": 1,
    "label": "Username",
    "reqd": 1
   },
   {
    "fieldname": "password",
    "fieldtype": "Password",
+   "in_list_view": 1,
    "label": "Password",
    "reqd": 1
   },
@@ -92,6 +95,7 @@
   {
    "fieldname": "remote_path",
    "fieldtype": "Data",
+   "in_list_view": 1,
    "label": "Remote Path",
    "reqd": 1
   },
@@ -113,9 +117,8 @@
    "label": "Test Connection"
   },
   {
-   "fieldname": "shop_mappings_section",
-   "fieldtype": "Section Break",
-   "icon": "octicon octicon-list-unordered",
+   "fieldname": "shop_mappings_tab",
+   "fieldtype": "Tab Break",
    "label": "Shop Mappings"
   },
   {
@@ -125,9 +128,8 @@
    "options": "Teraoka Shop Mapping Details"
   },
   {
-   "fieldname": "erp_mappings_section",
-   "fieldtype": "Section Break",
-   "icon": "octicon octicon-database",
+   "fieldname": "erp_mappings_tab",
+   "fieldtype": "Tab Break",
    "label": "Global Defaults"
   },
   {
@@ -161,9 +163,8 @@
    "options": "Account"
   },
   {
-   "fieldname": "automation_section",
-   "fieldtype": "Section Break",
-   "icon": "octicon octicon-zap",
+   "fieldname": "automation_tab",
+   "fieldtype": "Tab Break",
    "label": "Automation Settings"
   },
   {
@@ -183,9 +184,8 @@
    "label": "Auto-Submit Invoices"
   },
   {
-   "fieldname": "item_master_section",
-   "fieldtype": "Section Break",
-   "icon": "octicon octicon-package",
+   "fieldname": "item_master_tab",
+   "fieldtype": "Tab Break",
    "label": "Item Master Defaults"
   },
   {
@@ -196,9 +196,8 @@
    "options": "Item Group"
   },
   {
-   "fieldname": "netsuite_section",
-   "fieldtype": "Section Break",
-   "icon": "octicon octicon-link-external",
+   "fieldname": "netsuite_tab",
+   "fieldtype": "Tab Break",
    "label": "NetSuite Integration"
   },
   {
@@ -208,9 +207,15 @@
    "label": "NetSuite Sync Enabled"
   },
   {
-   "fieldname": "teams_webhook_url",
+   "fieldname": "google_chat_webhook_url",
    "fieldtype": "Data",
-   "label": "Teams Webhook URL"
+   "label": "Google Chat Webhook URL"
+  },
+  {
+   "description": "Target Customer Internal ID in NetSuite.",
+   "fieldname": "netsuite_customer_id",
+   "fieldtype": "Data",
+   "label": "NetSuite Customer ID"
   },
   {
    "fieldname": "netsuite_account_id",
@@ -219,10 +224,10 @@
    "placeholder": "e.g. 1234567_SB1"
   },
   {
+   "description": "The RESTlet or REST API URL for your NetSuite instance.",
    "fieldname": "netsuite_rest_url",
    "fieldtype": "Data",
-   "label": "NetSuite REST URL",
-   "description": "The RESTlet or REST API URL for your NetSuite instance."
+   "label": "NetSuite REST URL"
   },
   {
    "fieldname": "column_break_ns_1",
@@ -255,7 +260,8 @@
  ],
  "icon": "octicon octicon-gear",
  "issingle": 1,
- "modified": "2026-04-24 16:35:00.000000",
+ "links": [],
+ "modified": "2026-06-18 16:17:53.368269",
  "modified_by": "Administrator",
  "module": "Teraoka Integration",
  "name": "Teraoka Settings",
@@ -272,7 +278,10 @@
    "write": 1
   }
  ],
+ "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": []
+ "states": [],
+ "track_changes": 1,
+ "track_seen": 1
 }

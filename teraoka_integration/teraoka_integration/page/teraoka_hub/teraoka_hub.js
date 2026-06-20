@@ -27,6 +27,11 @@ frappe.pages['teraoka-hub'].on_page_load = function(wrapper) {
 		}
 	}, 'icon-refresh');
 
+	// Add connection diagnostics button
+	page.add_inner_button('Run Connectivity Diagnostics', () => {
+		run_diagnostics_api();
+	});
+
 	// Add manual sync trigger
 	page.add_inner_button('Force SFTP Sync', () => {
 		trigger_sync_api();
@@ -37,13 +42,26 @@ frappe.pages['teraoka-hub'].on_page_load = function(wrapper) {
 		<div class="teraoka-dashboard">
 			<div class="dashboard-header-flex">
 				<div>
-					<div style="display: flex; align-items: center; gap: 12px;">
+					<div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
 						<h2 id="hub-main-title">Integration Performance Monitor</h2>
 						<div id="shop-filter-badge"></div>
 					</div>
 					<div class="subtitle" id="dashboard-sync-time">Enterprise Data Synchronization Console</div>
 				</div>
-				<div class="dashboard-filter-box">
+				<div class="dashboard-filter-box" style="display: flex; align-items: center; gap: 20px; flex-wrap: wrap;">
+					<!-- Connectivity Status Indicators -->
+					<div id="diagnostics-summary-bar" style="display: flex; gap: 10px;">
+						<span class="diagnostic-badge sftp-status unknown" title="SFTP POS Server"><i class="fa fa-server"></i> SFTP: Unknown</span>
+						<span class="diagnostic-badge ns-status unknown" title="NetSuite API"><i class="fa fa-cloud"></i> NetSuite: Unknown</span>
+					</div>
+					<!-- Auto-Refresh Toggle -->
+					<div class="auto-refresh-wrapper" style="display: flex; align-items: center; gap: 8px;">
+						<label class="switch-container" style="position: relative; display: inline-block; width: 34px; height: 20px; margin-bottom: 0;">
+							<input type="checkbox" id="auto-refresh-checkbox" style="opacity: 0; width: 0; height: 0;">
+							<span class="slider-switch" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; transition: .3s; border-radius: 20px;"></span>
+						</label>
+						<span class="refresh-label" style="font-size: 12px; color: #64748b; font-weight: 500;">Auto-Refresh (30s)</span>
+					</div>
 					<div id="teraoka-date-range-container" style="min-width: 250px;"></div>
 				</div>
 			</div>
@@ -78,6 +96,38 @@ frappe.pages['teraoka-hub'].on_page_load = function(wrapper) {
 	const today = frappe.datetime.get_today();
 	page.date_range.set_value([today, today]);
 	render_dashboard_content(today, today);
+
+	// Setup Auto-Refresh Interval
+	page.auto_refresh_interval = null;
+	const $checkbox = $(page.main).find('#auto-refresh-checkbox');
+	$checkbox.on('change', function() {
+		if (this.checked) {
+			page.auto_refresh_interval = setInterval(() => {
+				const val = page.date_range ? page.date_range.get_value() : null;
+				const shop = page.current_shop;
+				if (val && val.length === 2) {
+					render_dashboard_content(val[0], val[1], shop, true); // silent refresh
+				} else {
+					render_dashboard_content(null, null, null, true);
+				}
+			}, 30000);
+		} else {
+			if (page.auto_refresh_interval) {
+				clearInterval(page.auto_refresh_interval);
+				page.auto_refresh_interval = null;
+			}
+		}
+	});
+
+	// Cleanup Auto-Refresh when leaving/destroying frame
+	$(wrapper).on('destroy', () => {
+		if (page.auto_refresh_interval) {
+			clearInterval(page.auto_refresh_interval);
+		}
+	});
+
+	// Run Diagnostics shortly after page load
+	setTimeout(run_diagnostics_api, 800);
 }
 
 function trigger_sync_api() {
@@ -92,11 +142,59 @@ function trigger_sync_api() {
 	});
 }
 
-function render_dashboard_content(from_date, to_date, shop_code) {
+function run_diagnostics_api() {
+	const $sftp = $('.diagnostic-badge.sftp-status');
+	const $ns = $('.diagnostic-badge.ns-status');
+	
+	$sftp.attr('class', 'diagnostic-badge sftp-status checking').html('<i class="fa fa-spinner fa-spin"></i> SFTP: Testing...');
+	$ns.attr('class', 'diagnostic-badge ns-status checking').html('<i class="fa fa-spinner fa-spin"></i> NetSuite: Testing...');
+	
+	frappe.call({
+		method: 'teraoka_integration.teraoka_integration.page.teraoka_hub.teraoka_hub.run_connectivity_diagnostics',
+		callback: function(r) {
+			if (r.message) {
+				const sftp = r.message.sftp;
+				const netsuite = r.message.netsuite;
+				
+				if (sftp.status === 'Success') {
+					$sftp.attr('class', 'diagnostic-badge sftp-status success')
+						.html('<i class="fa fa-check-circle"></i> SFTP: Connected')
+						.attr('title', 'SFTP POS Server: Connection Successful');
+				} else {
+					$sftp.attr('class', 'diagnostic-badge sftp-status failed')
+						.html('<i class="fa fa-times-circle"></i> SFTP: Error')
+						.attr('title', `SFTP POS Server Error: ${sftp.message}`);
+				}
+				
+				if (netsuite.status === 'Success') {
+					$ns.attr('class', 'diagnostic-badge ns-status success')
+						.html('<i class="fa fa-check-circle"></i> NetSuite: Connected')
+						.attr('title', 'NetSuite REST API: Connection Successful');
+				} else if (netsuite.status === 'Disabled') {
+					$ns.attr('class', 'diagnostic-badge ns-status disabled')
+						.html('<i class="fa fa-minus-circle"></i> NetSuite: Disabled')
+						.attr('title', 'NetSuite integration is disabled in settings');
+				} else {
+					$ns.attr('class', 'diagnostic-badge ns-status failed')
+						.html('<i class="fa fa-times-circle"></i> NetSuite: Error')
+						.attr('title', `NetSuite API Error: ${netsuite.message || netsuite.error}`);
+				}
+			} else {
+				$sftp.attr('class', 'diagnostic-badge sftp-status unknown').html('<i class="fa fa-question-circle"></i> SFTP: Unknown');
+				$ns.attr('class', 'diagnostic-badge ns-status unknown').html('<i class="fa fa-question-circle"></i> NetSuite: Unknown');
+				frappe.show_alert({message: __('Diagnostics failed.'), indicator: 'red'});
+			}
+		}
+	});
+}
+
+function render_dashboard_content(from_date, to_date, shop_code, silent = false) {
 	const $content = $('#dashboard-content-area');
 	if (!$content.length) return;
 
-	$content.css('opacity', '0.5');
+	if (!silent) {
+		$content.css('opacity', '0.5');
+	}
 
 	frappe.call({
 		method: 'teraoka_integration.teraoka_integration.page.teraoka_hub.teraoka_hub.get_dashboard_data',
@@ -106,7 +204,9 @@ function render_dashboard_content(from_date, to_date, shop_code) {
 			if (r.message) {
 				update_ui(r.message);
 			} else {
-				$content.html('<div class="alert alert-danger">Failed to load analytics. Please try refreshing.</div>');
+				if (!silent) {
+					$content.html('<div class="alert alert-danger">Failed to load analytics. Please try refreshing.</div>');
+				}
 			}
 		}
 	});
@@ -167,6 +267,13 @@ function update_ui(data) {
 						<div class="t-card">
 							<div class="t-card-header"><span class="t-card-title">Success Rate</span><div class="t-card-icon icon-blue"><i class="fa fa-check-circle"></i></div></div>
 							<div class="t-card-value">${data.success_rate || 0}%</div>
+						</div>
+						<div class="t-card queue-card">
+							<div class="t-card-header"><span class="t-card-title">Queue Status</span><div class="t-card-icon icon-orange"><i class="fa fa-tasks"></i></div></div>
+							<div class="t-card-value" style="font-size: 15px; flex-direction: column; align-items: flex-start; gap: 4px;">
+								<div><span style="font-weight: 700; color: #f59e0b;">${data.processing_count || 0}</span> Processing</div>
+								<div style="font-size: 11px; color: #64748b;"><span style="font-weight: 600;">${data.pending_sync_count || 0}</span> Pending NetSuite Sync</div>
+							</div>
 						</div>
 					</div>
 				</div>
@@ -257,7 +364,17 @@ function update_ui(data) {
 				<div class="action-center-section">
 					<h3><i class="fa fa-exclamation-triangle"></i> CRITICAL: Actions Required</h3>
 					<div class="action-list">
-						${actions.map(action => `<div class="action-item"><span>${action.message}</span><a href="${action.link}" class="btn-action">Resolve Now</a></div>`).join('')}
+						${actions.map(action => `
+							<div class="action-item" id="action-log-${action.log_name}" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+								<span>${action.message}</span>
+								<div style="display: flex; gap: 8px;">
+									<button onclick="reprocess_log_file('${action.log_name}')" class="btn btn-default btn-xs btn-retry-action" style="font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 4px;">
+										<i class="fa fa-refresh"></i> Retry Reprocessing
+									</button>
+									<a href="${action.link}" class="btn-action" style="font-size: 11px; padding: 4px 10px; border-radius: 4px;">View Details</a>
+								</div>
+							</div>
+						`).join('')}
 					</div>
 				</div>
 			`;
@@ -285,6 +402,39 @@ function update_ui(data) {
 		$content.html('<div class="alert alert-danger">Rendering Error. Please reload.</div>');
 	}
 }
+
+window.reprocess_log_file = function(log_name) {
+	const $item = $(`#action-log-${log_name}`);
+	const $btn = $item.find('.btn-retry-action');
+	
+	$btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Enqueuing...');
+	
+	frappe.call({
+		method: 'teraoka_integration.teraoka_integration.page.teraoka_hub.teraoka_hub.reprocess_file',
+		args: { log_name: log_name },
+		callback: function(r) {
+			if (r.message && r.message.status === 'Success') {
+				frappe.show_alert({message: __('File processing enqueued successfully.'), indicator: 'green'});
+				
+				// Instantly reload dashboard
+				const page = frappe.pages['teraoka-hub'].page;
+				const val = page.date_range ? page.date_range.get_value() : null;
+				const shop = page.current_shop;
+				if (val && val.length === 2) {
+					render_dashboard_content(val[0], val[1], shop);
+				} else {
+					render_dashboard_content();
+				}
+			} else {
+				$btn.prop('disabled', false).html('<i class="fa fa-refresh"></i> Retry Reprocessing');
+				frappe.show_alert({message: __('Enqueuing failed.'), indicator: 'red'});
+			}
+		},
+		error: function() {
+			$btn.prop('disabled', false).html('<i class="fa fa-refresh"></i> Retry Reprocessing');
+		}
+	});
+};
 
 window.apply_shop_filter = function(shop_code) {
 	const page = frappe.pages['teraoka-hub'].page;
